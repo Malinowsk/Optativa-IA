@@ -1,4 +1,4 @@
-#!pip install geneticalgorithm
+pip install geneticalgorithm
 import random
 import numpy as np
 import sys
