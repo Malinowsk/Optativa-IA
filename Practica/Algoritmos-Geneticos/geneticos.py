@@ -1,10 +1,11 @@
-pip install geneticalgorithm
+#!pip install geneticalgorithm
 import random
 import numpy as np
 import sys
 import time
 from func_timeout import func_timeout, FunctionTimedOut
 import matplotlib.pyplot as plt
+from geneticalgorithm import geneticalgorithm as ga
 
 # Listado de jugadores disponibles
 jugadores = (("J0", 10, 4, 6, 10, 10),
@@ -788,8 +789,7 @@ class geneticalgorithm_Initial_Population():
         print("\n+---------------+-----------+-----------+-----------+-----------+-----------+")
 
 
-import numpy as np
-from geneticalgorithm import geneticalgorithm as ga
+
 
 
 # Función de fitness
