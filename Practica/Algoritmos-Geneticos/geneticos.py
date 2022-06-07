@@ -1,4 +1,3 @@
-#!pip install geneticalgorithm
 import random
 import numpy as np
 import sys
@@ -40,63 +39,24 @@ jugadores = (("J0", 10, 4, 6, 10, 10),
              ("J29", 10, 8, 7, 7, 6),
              ("J30", 10, 1, 5, 8, 5))
 
-
-def generar_cromosoma(jugadores):
-    arreglo=[]
-    j=0
-    while (j<11):
-        aleatorio = random.randint(1, 30-j)
-        i=1
-        while (i<len(jugadores[aleatorio])):
-            arreglo.append(jugadores[aleatorio][i])
-            i=i+1
-        y = list(jugadores)
-        y.pop(aleatorio)
-        jugadores = tuple(y)
-        j=j+1
-    return arreglo
-
-# generamos la poblacion inicial
-poblacionInicial = []
-
-for i in range (0,30):
-  cromosoma = generar_cromosoma(jugadores)
-  poblacionInicial.append(cromosoma)
-
-for cromosoma in poblacionInicial:
-  print(cromosoma)
+# Promedio de caracteristicas esperadas por el director técnico
+promedios_esperados = [7.5 , 7.5 , 8.0 , 7.0 , 9.0]
 
 ###############################################################################
 ###############################################################################
 ###############################################################################
+
+import sys
+import time
+from func_timeout import func_timeout, FunctionTimedOut
+import matplotlib.pyplot as plt
 
 
 ###############################################################################
 ###############################################################################
 ###############################################################################
 
-class geneticalgorithm_Initial_Population():
-    '''  Genetic Algorithm (Elitist version) for Python
-
-    An implementation of elitist genetic algorithm for solving problems with
-    continuous, integers, or mixed variables.
-
-
-
-    Implementation and output:
-
-        methods:
-                run(): implements the genetic algorithm
-
-        outputs:
-                output_dict:  a dictionary including the best set of variables
-            found and the value of the given function associated to it.
-            {'variable': , 'function': }
-
-                report: a list including the record of the progress of the
-                algorithm over iterations
-
-    '''
+class geneticalgorithm():
 
     #############################################################
     def __init__(self, function, dimension, variable_type='bool', \
@@ -109,64 +69,12 @@ class geneticalgorithm_Initial_Population():
                                        'elit_ratio': 0.01, \
                                        'crossover_probability': 0.5, \
                                        'parents_portion': 0.3, \
-                                       'crossover_type': 'uniform', \
+                                       'crossover_type': 'uniform-modificado', \
                                        'max_iteration_without_improv': None}, \
                  convergence_curve=True, \
                  progress_bar=True):
 
-        '''
-        @param function <Callable> - the given objective function to be minimized
-        NOTE: This implementation minimizes the given objective function.
-        (For maximization multiply function by a negative sign: the absolute
-        value of the output would be the actual objective function)
-
-        @param dimension <integer> - the number of decision variables
-
-        @param variable_type <string> - 'bool' if all variables are Boolean;
-        'int' if all variables are integer; and 'real' if all variables are
-        real value or continuous (for mixed type see @param variable_type_mixed)
-
-        @param variable_boundaries <numpy array/None> - Default None; leave it
-        None if variable_type is 'bool'; otherwise provide an array of tuples
-        of length two as boundaries for each variable;
-        the length of the array must be equal dimension. For example,
-        np.array([0,100],[0,200]) determines lower boundary 0 and upper boundary 100 for first
-        and upper boundary 200 for second variable where dimension is 2.
-
-        @param variable_type_mixed <numpy array/None> - Default None; leave it
-        None if all variables have the same type; otherwise this can be used to
-        specify the type of each variable separately. For example if the first
-        variable is integer but the second one is real the input is:
-        np.array(['int'],['real']). NOTE: it does not accept 'bool'. If variable
-        type is Boolean use 'int' and provide a boundary as [0,1]
-        in variable_boundaries. Also if variable_type_mixed is applied,
-        variable_boundaries has to be defined.
-
-        @param function_timeout <float> - if the given function does not provide
-        output before function_timeout (unit is seconds) the algorithm raise error.
-        For example, when there is an infinite loop in the given function.
-
-        @param algorithm_parameters:
-            @ max_num_iteration <int> - stoping criteria of the genetic algorithm (GA)
-            @ population_size <int>
-            @ mutation_probability <float in [0,1]>
-            @ elit_ration <float in [0,1]>
-            @ crossover_probability <float in [0,1]>
-            @ parents_portion <float in [0,1]>
-            @ crossover_type <string> - Default is 'uniform'; 'one_point' or
-            'two_point' are other options
-            @ max_iteration_without_improv <int> - maximum number of
-            successive iterations without improvement. If None it is ineffective
-
-        @param convergence_curve <True/False> - Plot the convergence curve or not
-        Default is True.
-        @progress_bar <True/False> - Show progress bar or not. Default is True.
-
-        for more details and examples of implementation please visit:
-            https://github.com/rmsolgi/geneticalgorithm
-
-        '''
-        self.__name__ = geneticalgorithm_Initial_Population
+        self.__name__ = geneticalgorithm
         #############################################################
         # input function
         assert (callable(function)), "function must be callable"
@@ -294,9 +202,9 @@ class geneticalgorithm_Initial_Population():
             self.iterate = int(self.param['max_num_iteration'])
 
         self.c_type = self.param['crossover_type']
-        assert (self.c_type == 'uniform' or self.c_type == 'one_point' or \
+        assert (self.c_type == 'uniform-modificado' or self.c_type == 'one_point' or \
                 self.c_type == 'two_point'), \
-            "\n crossover_type must 'uniform', 'one_point', or 'two_point' Enter string"
+            "\n crossover_type must 'uniform-modificado', 'one_point', or 'two_point' Enter string"
 
         self.stop_mniwi = False
         if self.param['max_iteration_without_improv'] == None:
@@ -306,7 +214,7 @@ class geneticalgorithm_Initial_Population():
 
         #############################################################
 
-    def run(self):
+    def run(self):  # Modificado
 
         #############################################################
         # Initial Population
@@ -321,12 +229,16 @@ class geneticalgorithm_Initial_Population():
         for p in range(0, self.pop_s):
 
             for i in self.integers[0]:
-                var[i] = np.random.randint(self.var_bound[i][0], \
-                                           self.var_bound[i][1] + 1)
-                solo[i] = var[i].copy()
-            for i in self.reals[0]:
-                var[i] = self.var_bound[i][0] + np.random.random() * \
-                         (self.var_bound[i][1] - self.var_bound[i][0])
+                noAsignado = True
+                arrayAux = []
+                while (noAsignado):
+                    aux = np.random.randint(self.var_bound[i][0], \
+                                            self.var_bound[i][1] + 1)
+                    arrayAux = var.copy()
+                    if aux not in arrayAux:
+                        var[i] = aux
+                        noAsignado = False
+
                 solo[i] = var[i].copy()
 
             obj = self.sim(var)
@@ -334,186 +246,11 @@ class geneticalgorithm_Initial_Population():
             pop[p] = solo.copy()
 
         #############################################################
-
         #############################################################
         # Report
         self.report = []
         self.test_obj = obj
         self.best_variable = var.copy()
-        self.best_function = obj
-        ##############################################################
-
-        t = 1
-        counter = 0
-        while t <= self.iterate:
-
-            if self.progress_bar == True:
-                self.progress(t, self.iterate, status="GA is running...")
-            #############################################################
-            # Sort
-            pop = pop[pop[:, self.dim].argsort()]
-
-            if pop[0, self.dim] < self.best_function:
-                counter = 0
-                self.best_function = pop[0, self.dim].copy()
-                self.best_variable = pop[0, : self.dim].copy()
-            else:
-                counter += 1
-            #############################################################
-            # Report
-
-            self.report.append(pop[0, self.dim])
-
-            ##############################################################
-            # Normalizing objective function
-
-            normobj = np.zeros(self.pop_s)
-
-            minobj = pop[0, self.dim]
-            if minobj < 0:
-                normobj = pop[:, self.dim] + abs(minobj)
-
-            else:
-                normobj = pop[:, self.dim].copy()
-
-            maxnorm = np.amax(normobj)
-            normobj = maxnorm - normobj + 1
-
-            #############################################################
-            # Calculate probability
-
-            sum_normobj = np.sum(normobj)
-            prob = np.zeros(self.pop_s)
-            prob = normobj / sum_normobj
-            cumprob = np.cumsum(prob)
-
-            #############################################################
-            # Select parents
-            par = np.array([np.zeros(self.dim + 1)] * self.par_s)
-
-            for k in range(0, self.num_elit):
-                par[k] = pop[k].copy()
-            for k in range(self.num_elit, self.par_s):
-                index = np.searchsorted(cumprob, np.random.random())
-                par[k] = pop[index].copy()
-
-            ef_par_list = np.array([False] * self.par_s)
-            par_count = 0
-            while par_count == 0:
-                for k in range(0, self.par_s):
-                    if np.random.random() <= self.prob_cross:
-                        ef_par_list[k] = True
-                        par_count += 1
-
-            ef_par = par[ef_par_list].copy()
-
-            #############################################################
-            # New generation
-            pop = np.array([np.zeros(self.dim + 1)] * self.pop_s)
-
-            for k in range(0, self.par_s):
-                pop[k] = par[k].copy()
-
-            for k in range(self.par_s, self.pop_s, 2):
-                r1 = np.random.randint(0, par_count)
-                r2 = np.random.randint(0, par_count)
-                pvar1 = ef_par[r1, : self.dim].copy()
-                pvar2 = ef_par[r2, : self.dim].copy()
-
-                ch = self.cross(pvar1, pvar2, self.c_type)
-                ch1 = ch[0].copy()
-                ch2 = ch[1].copy()
-
-                ch1 = self.mut(ch1)
-                ch2 = self.mutmidle(ch2, pvar1, pvar2)
-                solo[: self.dim] = ch1.copy()
-                obj = self.sim(ch1)
-                solo[self.dim] = obj
-                pop[k] = solo.copy()
-                solo[: self.dim] = ch2.copy()
-                obj = self.sim(ch2)
-                solo[self.dim] = obj
-                pop[k + 1] = solo.copy()
-            #############################################################
-            t += 1
-            if counter > self.mniwi:
-                pop = pop[pop[:, self.dim].argsort()]
-                if pop[0, self.dim] >= self.best_function:
-                    t = self.iterate
-                    if self.progress_bar == True:
-                        self.progress(t, self.iterate, status="GA is running...")
-                    time.sleep(2)
-                    t += 1
-                    self.stop_mniwi = True
-
-        #############################################################
-        # Sort
-        pop = pop[pop[:, self.dim].argsort()]
-
-        if pop[0, self.dim] < self.best_function:
-            self.best_function = pop[0, self.dim].copy()
-            self.best_variable = pop[0, : self.dim].copy()
-        #############################################################
-        # Report
-
-        self.report.append(pop[0, self.dim])
-
-        self.output_dict = {'variable': self.best_variable, 'function': \
-            self.best_function}
-        if self.progress_bar == True:
-            show = ' ' * 100
-            sys.stdout.write('\r%s' % (show))
-        sys.stdout.write('\r The best solution found:\n %s' % (self.best_variable))
-
-        # mostrar(self.best_variable)
-
-        sys.stdout.write('\n\n Objective function:\n %s\n' % (self.best_function))
-        sys.stdout.flush()
-        re = np.array(self.report)
-        if self.convergence_curve == True:
-            plt.plot(re)
-            plt.xlabel('Iteration')
-            plt.ylabel('Objective function')
-            plt.title('Genetic Algorithm')
-            plt.show()
-
-        if self.stop_mniwi == True:
-            sys.stdout.write('\nWarning: GA is terminated due to the' + \
-                             ' maximum number of iterations without improvement was met!')
-
-    ##############################################################################
-
-    def run2(self):  # Modificado
-
-        #############################################################
-        # Initial Population
-
-        self.integers = np.where(self.var_type == 'int')
-        self.reals = np.where(self.var_type == 'real')
-
-        pop = np.array([np.zeros(self.dim + 1)] * self.pop_s)
-        solo = np.zeros(self.dim + 1)
-        var = np.zeros(self.dim)
-
-        for p in range(0, self.pop_s):
-
-            for i in self.integers[0]:  # Modificado
-                var[i] = poblacionInicial[p][i]  # Extraemos los genes a partir del arreglo poblacionInicial
-                solo[i] = var[i].copy()
-            for i in self.reals[0]:
-                var[i] = poblacionInicial[p][i]  # Extraemos los genes a partir del arreglo poblacionInicial
-                solo[i] = var[i].copy()
-
-            obj = self.sim(var)
-            solo[self.dim] = obj
-            pop[p] = solo.copy()
-
-        #############################################################
-        #############################################################
-        # Report
-        self.report = []
-        self.test_obj = obj
-        self.best_variable = poblacionInicial.copy()
         self.best_function = obj
         ##############################################################
 
@@ -638,6 +375,7 @@ class geneticalgorithm_Initial_Population():
         if self.progress_bar == True:
             show = ' ' * 100
             sys.stdout.write('\r%s' % (show))
+        sys.stdout.write('\r The best solution found:\n %s' % (self.best_variable))
         print("\n")
         self.mostrar(self.best_variable)  # Sentencia agregada
 
@@ -674,11 +412,16 @@ class geneticalgorithm_Initial_Population():
                 ofs1[i] = y[i].copy()
                 ofs2[i] = x[i].copy()
 
-        if c_type == 'uniform':
-
+        if c_type == 'uniform-modificado':  # Implementado por nosotros
+            arrayAux1 = []
+            arrayAux2 = []
             for i in range(0, self.dim):
+                arrayAux1 = ofs1
+                arrayAux2 = ofs2
+                dato1 = y[i]
+                dato2 = x[i]
                 ran = np.random.random()
-                if ran < 0.5:
+                if (ran < 0.5) and (dato1 not in arrayAux1) and (dato2 not in arrayAux2):
                     ofs1[i] = y[i].copy()
                     ofs2[i] = x[i].copy()
 
@@ -687,44 +430,32 @@ class geneticalgorithm_Initial_Population():
     ###############################################################################
 
     def mut(self, x):
-
-        for i in self.integers[0]:
+        for i in self.integers[0]:  # modificado mutacion para el int
             ran = np.random.random()
             if ran < self.prob_mut:
-                x[i] = np.random.randint(self.var_bound[i][0], \
-                                         self.var_bound[i][1] + 1)
-
-        for i in self.reals[0]:
-            ran = np.random.random()
-            if ran < self.prob_mut:
-                x[i] = self.var_bound[i][0] + np.random.random() * \
-                       (self.var_bound[i][1] - self.var_bound[i][0])
-
+                noAsignado = True
+                while (noAsignado):
+                    aux = np.float64(np.random.randint(self.var_bound[i][0], \
+                                                       self.var_bound[i][1] + 1))
+                    if (aux not in x):
+                        x[i] = aux
+                        noAsignado = False
         return x
 
     ###############################################################################
-    def mutmidle(self, x, p1, p2):
-        for i in self.integers[0]:
-            ran = np.random.random()
-            if ran < self.prob_mut:
-                if p1[i] < p2[i]:
-                    x[i] = np.random.randint(p1[i], p2[i])
-                elif p1[i] > p2[i]:
-                    x[i] = np.random.randint(p2[i], p1[i])
-                else:
-                    x[i] = np.random.randint(self.var_bound[i][0], \
-                                             self.var_bound[i][1] + 1)
+    def mutmidle(self, x, p1, p2):  # modificado para que ejecute el mismo algoritmo de mut
 
-        for i in self.reals[0]:
+        for i in self.integers[0]:  # modificado mutacion para el int
             ran = np.random.random()
             if ran < self.prob_mut:
-                if p1[i] < p2[i]:
-                    x[i] = p1[i] + np.random.random() * (p2[i] - p1[i])
-                elif p1[i] > p2[i]:
-                    x[i] = p2[i] + np.random.random() * (p1[i] - p2[i])
-                else:
-                    x[i] = self.var_bound[i][0] + np.random.random() * \
-                           (self.var_bound[i][1] - self.var_bound[i][0])
+                noAsignado = True
+                while (noAsignado):
+                    aux = np.float64(np.random.randint(self.var_bound[i][0], \
+                                                       self.var_bound[i][1] + 1))
+                    if (aux not in x):
+                        x[i] = aux
+                        noAsignado = False
+
         return x
 
     ###############################################################################
@@ -763,22 +494,21 @@ class geneticalgorithm_Initial_Population():
         print("|               | Ofensivo  | Defensivo |   Aereo   | Habilidad | Velocidad |")
         print("+---------------+-----------+-----------+-----------+-----------+-----------+")
         for g in range(0, 11):
-            print("| Jugador " + (str(g + 1) + " ")[0:2] + "    ", end="|")
-            print("    " + (" " + str(int(cromosoma[g * 5 + 0])))[-2:] + "     |    " + (" " + str(
-                int(cromosoma[g * 5 + 1])))[-2:] + "     |    " + (" " + str(int(cromosoma[g * 5 + 2])))[
-                                                                  -2:] + "     |    " + (" " + str(
-                int(cromosoma[g * 5 + 3])))[-2:] + "     |    " + (" " + str(int(cromosoma[g * 5 + 4])))[
-                                                                  -2:] + "     |")
+            print("| Jugador " + (str(int(cromosoma[g])) + " ")[0:2] + "    ", end="|")
+            print("    " + (" " + str(int(jugadores[int(cromosoma[g])][1])))[-2:] + "     |    " + (" " + str(
+                int(jugadores[int(cromosoma[g])][2])))[-2:] + "     |    " + (" " + str(
+                int(jugadores[int(cromosoma[g])][3])))[-2:] + "     |    " + (" " + str(
+                int(jugadores[int(cromosoma[g])][4])))[-2:] + "     |    " + (" " + str(
+                int(jugadores[int(cromosoma[g])][5])))[-2:] + "     |")
             print("+---------------+-----------+-----------+-----------+-----------+-----------+")
 
         sumas_de_caracteristicas = [0, 0, 0, 0, 0]
-        promedios_esperados = [5.0, 8.0, 7.0, 4.0, 6.0]
         for i in range(0, 11):
-            sumas_de_caracteristicas[0] += cromosoma[i * 5 + 0]  # Juego-Ofensivo
-            sumas_de_caracteristicas[1] += cromosoma[i * 5 + 1]  # Juego-Defensivo
-            sumas_de_caracteristicas[2] += cromosoma[i * 5 + 2]  # Juego-Aereo
-            sumas_de_caracteristicas[3] += cromosoma[i * 5 + 3]  # Habilidad
-            sumas_de_caracteristicas[4] += cromosoma[i * 5 + 4]  # Velocidad
+            sumas_de_caracteristicas[0] += jugadores[int(cromosoma[i])][1]  # Juego-Ofensivo
+            sumas_de_caracteristicas[1] += jugadores[int(cromosoma[i])][2]  # Juego-Defensivo
+            sumas_de_caracteristicas[2] += jugadores[int(cromosoma[i])][3]  # Juego-Aereo
+            sumas_de_caracteristicas[3] += jugadores[int(cromosoma[i])][4]  # Habilidad
+            sumas_de_caracteristicas[4] += jugadores[int(cromosoma[i])][5]  # Velocidad
         print("| Prom Obtenido ", end="|")
         for j in range(0, 5):
             print("    " + str(round(sumas_de_caracteristicas[j] / 11, 1)) + "    ", end="|")
@@ -789,67 +519,52 @@ class geneticalgorithm_Initial_Population():
         print("\n+---------------+-----------+-----------+-----------+-----------+-----------+")
 
 
-
+# Ejecución del algoritmo genético
+import numpy as np
 
 
 # Función de fitness
-def fitness(X):
-    cromosoma = X
-    valor_fitness = 0
-    sumas_de_caracteristicas = [0, 0, 0, 0, 0]
-    promedios_esperados = [5.0, 8.0, 7.0, 4.0, 6.0]
-    for i in range(0, 11):
-        sumas_de_caracteristicas[0] += cromosoma[i * 5 + 0]  # Juego-Ofensivo
-        sumas_de_caracteristicas[1] += cromosoma[i * 5 + 1]  # Juego-Defensivo
-        sumas_de_caracteristicas[2] += cromosoma[i * 5 + 2]  # Juego-Aereo
-        sumas_de_caracteristicas[3] += cromosoma[i * 5 + 3]  # Habilidad
-        sumas_de_caracteristicas[4] += cromosoma[i * 5 + 4]  # Velocidad
-    for j in range(0, 5):
-        if ((sumas_de_caracteristicas[j] / 11) >= promedios_esperados[j]):
-            valor_fitness += 1
-    return -valor_fitness  # Objetivo: maximizar
 
-
-'''
 def fitness(X):
     cromosoma=X
-    valor_fitness=0
-    sumas_de_caracteristicas = [0 , 0 , 0 , 0 , 0]
-    promedios_esperados = [9.0 , 8.0 , 9.0 , 8.0 , 9.0]
-    promedios_esperados2 = [5.0 , 5.0 , 5.0 , 5.0 , 5.0]
-    for i in range(0,11):
-      sumas_de_caracteristicas[0]+=cromosoma[i*5+0] #velocidad
-      sumas_de_caracteristicas[1]+=cromosoma[i*5+1]  #defensa
-      sumas_de_caracteristicas[2]+=cromosoma[i*5+2]  #ataque
-      sumas_de_caracteristicas[3]+=cromosoma[i*5+3]  #regate
-      sumas_de_caracteristicas[4]+=cromosoma[i*5+4]  #remate
-    for j in range(0,5):
-      if( (sumas_de_caracteristicas[j]/11) >= promedios_esperados[j]):
-        valor_fitness+=1
-      if( (sumas_de_caracteristicas[j]/11) >= promedios_esperados2[j]):
-        valor_fitness+=1
+    valor_fitness=0.0
+    if(esUnEquipoValido(cromosoma)):
+      sumas_de_caracteristicas = [0 , 0 , 0 , 0 , 0]
+      for i in range(0,11):
+        sumas_de_caracteristicas[0]+=jugadores[int(cromosoma[i])][1]  #Juego-Ofensivo
+        sumas_de_caracteristicas[1]+=jugadores[int(cromosoma[i])][2]  #Juego-Defensivo
+        sumas_de_caracteristicas[2]+=jugadores[int(cromosoma[i])][3]  #Juego-Aereo
+        sumas_de_caracteristicas[3]+=jugadores[int(cromosoma[i])][4]  #Habilidad
+        sumas_de_caracteristicas[4]+=jugadores[int(cromosoma[i])][5]  #Velocidad
+      for j in range(0,5):
+        if( (sumas_de_caracteristicas[j]/11) >= promedios_esperados[j]):
+          valor_fitness+= promedios_esperados[j]
+          #valor_fitness-= ((sumas_de_caracteristicas[j]/11) - promedios_esperados[j])  #Agregando esta sentencia se busca igualar el valor exacto de los promedios esperados
+        else:
+          valor_fitness += (sumas_de_caracteristicas[j]/11)
+    else:
+        valor_fitness=-1000000000
+    return -valor_fitness # Objetivo: maximizar
 
-    return -valor_fitness # Objetivo: maximizar 
-'''
+
+def esUnEquipoValido(cromosoma):
+    return len(cromosoma)==len(set(cromosoma)) #siempre da valido para nuestro algoritmo
 
 # Rangos de cada gen
-varbound = np.array([[0, 10], [0, 10], [0, 10], [0, 10], [0, 10]] * 11)
+varbound=np.array([[0,30]]*11)
 
 # Parametros del algoritmo
-algorithm_param = {'max_num_iteration': None, \
-                   'population_size': 5, \
-                   'mutation_probability': 0.2, \
-                   'elit_ratio': 0.2, \
-                   'crossover_probability': 0.5, \
-                   'parents_portion': 0.3, \
-                   'crossover_type': 'one_point', \
-                   'max_iteration_without_improv': 300}
+algorithm_param = {'max_num_iteration': None,\
+                   'population_size':50,\
+                   'mutation_probability':0.2,\
+                   'elit_ratio': 0.2,\
+                   'crossover_probability': 0.5,\
+                   'parents_portion': 0.4,\
+                   'crossover_type':'uniform-modificado',\
+                   'max_iteration_without_improv':200}
 
 # Creación del modelo
-model = geneticalgorithm_Initial_Population(function=fitness, dimension=55, variable_type="int",
-                                            variable_boundaries=varbound, algorithm_parameters=algorithm_param)
+model=geneticalgorithm( function=fitness, dimension=11, variable_type="int", variable_boundaries=varbound, algorithm_parameters=algorithm_param )
 
 # Ejecucion del algoritmo
-model.run2()
-
-
+model.run()
